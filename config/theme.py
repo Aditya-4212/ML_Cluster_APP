@@ -8,20 +8,24 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500&display=swap');
 
 :root {
-    --bg:      #07080f;
-    --bg2:     #0d0e1a;
-    --card:    #111225;
-    --card2:   #181930;
-    --border:  #1e2035;
-    --border2: #2a2c4a;
-    --cyan:    #22d3ee;
-    --violet:  #a78bfa;
-    --emerald: #34d399;
-    --amber:   #fbbf24;
-    --rose:    #fb7185;
-    --text:    #e2e4f0;
-    --muted:   #8b90b0;   /* bumped from #6b7090 → WCAG AA compliant */
-    --dim:     #2e3050;
+    --bg:      #ffffff;
+    --bg2:     #f8fafc;
+    --card:    #ffffff;
+    --card2:   #f5f5f5;
+
+    --border:  #d1d5db;
+    --border2: #cbd5e1;
+
+    --cyan:    #2563eb;
+    --violet:  #7c3aed;
+    --emerald: #16a34a;
+    --amber:   #d97706;
+    --rose:    #dc2626;
+
+    --text:    #111827;
+    --muted:   #6b7280;
+    --dim:     #9ca3af;
+
     --font-head: 'Syne', sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
     --font-body: 'Outfit', sans-serif;
@@ -29,8 +33,8 @@ CSS = """
 
 html, body, [class*="css"] {
     font-family: var(--font-body) !important;
-    background: var(--bg) !important;
-    color: var(--text) !important;
+    background: #ffffff !important;
+    color: #111827 !important;
 }
 .main .block-container { padding: 1.5rem 2rem 3rem; max-width: 1500px; }
 
@@ -67,20 +71,49 @@ html, body, [class*="css"] {
 
 /* ── CARDS ── */
 .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 1.4rem 1.6rem;
-    margin-bottom: 1.2rem; position: relative; overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1.2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: all 0.25s ease;
 }
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.10);
+}
+
 .card::after {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(34,211,238,0.4), transparent);
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #2563eb;
 }
+
 .card-title {
-    font-family: var(--font-head); font-size: 1rem; font-weight: 700;
-    color: var(--text); margin-bottom: 0.6rem;
-    display: flex; align-items: center; gap: 0.5rem;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
-.card-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; margin-bottom: 0.8rem; }
+
+.card-desc {
+    font-size: 0.9rem;
+    color: #6b7280;
+    line-height: 1.7;
+    margin-bottom: 0.8rem;
+}
 
 /* ── ALERT / INSIGHT BOXES ── */
 .insight {
@@ -152,34 +185,61 @@ html, body, [class*="css"] {
 /* ── HERO ── */
 .hero { padding: 1.5rem 0 1rem; margin-bottom: 1.5rem; }
 .hero-title {
-    font-family: var(--font-head); font-size: 2.4rem; font-weight: 800;
-    background: linear-gradient(135deg, var(--cyan) 0%, var(--violet) 60%, var(--rose) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text; margin: 0; line-height: 1.1;
+    font-family: var(--font-head);
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #1e3a8a;
+    margin: 0;
+    line-height: 1.1;
 }
 .hero-sub { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; font-family: var(--font-mono); }
 
 /* ── SIDEBAR ── */
-.stSidebar { background: var(--bg2) !important; border-right: 1px solid var(--border) !important; }
+.stSidebar {
+    background: #f8fafc !important;
+    border-right: 1px solid #d1d5db !important;
+}
 .stSidebar label { font-family: var(--font-mono) !important; font-size: 0.75rem !important; color: var(--muted) !important; }
 
 /* ── BUTTONS ── */
+
 .stButton > button {
-    font-family: var(--font-mono) !important; font-size: 0.75rem !important;
-    letter-spacing: 0.08em !important; text-transform: uppercase !important;
-    border-radius: 6px !important; padding: 0.55rem 1.5rem !important; transition: all 0.2s !important;
+    font-family: var(--font-body) !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+
+    border-radius: 10px !important;
+    padding: 0.65rem 1.4rem !important;
+
+    transition: all 0.25s ease !important;
 }
+
+/* Primary Button */
+
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, var(--cyan), #0ea5e9) !important;
-    color: #07080f !important; border: none !important; font-weight: 600 !important;
+    background: #2563eb !important;
+    color: white !important;
+    border: none !important;
 }
+
 .stButton > button[kind="primary"]:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(34,211,238,0.25) !important;
+    background: #1d4ed8 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37,99,235,0.30) !important;
 }
+
+/* Secondary Button */
+
 .stButton > button[kind="secondary"] {
-    background: var(--card) !important; color: var(--text) !important;
-    border: 1px solid var(--border2) !important;
+    background: white !important;
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.stButton > button[kind="secondary"]:hover {
+    background: #f8fafc !important;
+    border-color: #2563eb !important;
+    color: #2563eb !important;
 }
 
 /* ── TABS ── */
