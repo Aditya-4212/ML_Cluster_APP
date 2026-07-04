@@ -35,12 +35,12 @@ with st.sidebar:
     st.markdown("## 🕸️ Navigation")
 
     step_labels = [
-        ("📂 Load Data",          0),
-        ("📊 EDA",                1),
-        ("🧹 Cleaning",           2),
-        ("⚙️ Feature Engineering", 3),
-        ("🤖 Clustering",         4),
-        ("📈 Results",            5),
+        (" Load Data",          0),
+        (" EDA",                1),
+        (" Cleaning",           2),
+        (" Feature Engineering", 3),
+        (" Clustering",         4),
+        (" Results",            5),
         ("🎓 Learn ML",           6),
     ]
 
