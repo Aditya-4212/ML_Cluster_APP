@@ -8,7 +8,7 @@ import streamlit as st
 
 from config.settings import SESSION_DEFAULTS
 from config.theme import inject_css
-from components.ui import hero, pipeline_stepper
+from components.ui import hero
 from pipeline.steps import (
     step_load, step_eda, step_clean, step_features,
     step_cluster, step_results, step_learn,
@@ -95,7 +95,7 @@ with st.sidebar:
 
 # ── Header ───────────────────────────────────────────────────
 hero()
-pipeline_stepper()
+#pipeline_stepper()
 
 # ── Router ───────────────────────────────────────────────────
 _STEP_FUNCTIONS = {
