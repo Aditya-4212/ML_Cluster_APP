@@ -167,5 +167,5 @@ hr { border-color: var(--border) !important; }
 """
 
 def inject_css():
-    """Inject the professional light theme"""
+    """Inject the professional complete white theme"""
     st.markdown(CSS, unsafe_allow_html=True)
