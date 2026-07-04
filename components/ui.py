@@ -96,6 +96,7 @@ def progress_tracker() -> None:
 
 
 # ── Pipeline stepper (now clickable) ─────────────────────────
+'''
 
 def pipeline_stepper() -> None:
     """
@@ -145,7 +146,10 @@ def pipeline_stepper() -> None:
             ):
                 st.session_state.step = i
                 st.rerun()
+'''
 
+def pipeline_stepper():
+    return
 
 # ── Hero header ───────────────────────────────────────────────
 
