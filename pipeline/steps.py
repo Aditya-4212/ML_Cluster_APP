@@ -790,13 +790,30 @@ def step_cluster() -> None:
 
         section("Hyperparameters")
         params = _algo_params_ui(algo)
+        scaler_c = st.selectbox(
+            "Scaler",
+            ["StandardScaler", "MinMaxScaler", "RobustScaler"],
+            key="c_scaler",
+        )
 
-        scaler_c    = st.selectbox("Scaler", ["StandardScaler", "MinMaxScaler", "RobustScaler"], key="c_scaler")
-        reduction_c = st.selectbox("Visualisation", ["PCA", "t-SNE"], key="c_red")
+        reduction_c = st.selectbox(
+            "Visualisation",
+            ["PCA", "t-SNE"],
+            key="c_red",
+        )
+
         st.session_state["reduction"] = reduction_c
 
         if st.button("▶ Train Model", type="primary", key="train_manual"):
             _train_model(df, algo, params, scaler_c)
+
+        # Show Results button after successful training
+        if st.session_state.get("clustering_done", False):
+            st.success("✅ Model trained successfully!")
+
+            if st.button("View Results →", type="primary", key="goto_results"):
+                st.session_state.step = 5
+                st.rerun()
 
     # ── AutoML ──
     with auto_tab:
@@ -1069,9 +1086,9 @@ def _run_automl(df: pd.DataFrame, scaler: str, reduction: str, n_km: int) -> Non
     if len(results) >= 3:
         st.plotly_chart(automl_comparison_chart(results), use_container_width=True)
 
-    if st.button("View Results →", type="primary", key="automl_goto_results"):
-        st.session_state.step = 5
-        st.rerun()
+  #  if st.button("View Results →", type="primary", key="automl_goto_results"):
+      #  st.session_state.step = 5
+      #  st.rerun()
 
 
 # ============================================================
