@@ -1294,6 +1294,13 @@ def step_results() -> None:
       #          back_label="Clustering", proceed_key="results_proceed")
    # nav_buttons(back_step=4,
             #    back_label="Clustering",)
+    col1, col2 = st.columns([1, 5])
+
+    with col1:
+        if st.button("← Clustering", key="results_back"):
+            st.session_state.step = 4
+            st.rerun()
+            
     recovery_panel(5)
 
 
