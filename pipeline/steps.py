@@ -588,8 +588,8 @@ def step_clean() -> None:
         st.session_state.step = 3
         st.rerun()
 
-    nav_buttons(back_step=1, back_label="EDA", proceed_label="✅ Apply & Continue →",
-                proceed_key="clean_nav_proceed")
+   ''' nav_buttons(back_step=1, back_label="EDA", proceed_label="✅ Apply & Continue →",
+                proceed_key="clean_nav_proceed")'''
     recovery_panel(2)
 
 
@@ -712,8 +712,8 @@ def step_features() -> None:
         st.session_state.step = 4
         st.rerun()
 
-    nav_buttons(back_step=2, back_label="Cleaning", proceed_label="✅ Lock & Continue →",
-                proceed_key="features_nav_proceed")
+   ''' nav_buttons(back_step=2, back_label="Cleaning", proceed_label="✅ Lock & Continue →",
+                proceed_key="features_nav_proceed")'''
     recovery_panel(3)
 
 
