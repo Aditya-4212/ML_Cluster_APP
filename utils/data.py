@@ -45,10 +45,25 @@ def load_csv(f) -> pd.DataFrame:
     if size_mb > _MAX_UPLOAD_MB:
         raise ValueError(f"File too large ({size_mb:.1f} MB). Limit is {_MAX_UPLOAD_MB} MB.")
 
-    try:
-        df = pd.read_csv(f)
-    except Exception as exc:
-        raise ValueError(f"Could not parse CSV: {exc}") from exc
+    last_error = None
+    
+    for params in [
+        {"encoding": "utf-8"},
+        {"encoding": "utf-8-sig"},
+        {"encoding": "latin1"},
+        {"sep": None, "engine": "python"},
+    ]:
+        try:
+            f.seek(0)
+            df = pd.read_csv(f, **params)
+    
+            if not df.empty and df.shape[1] >= 2:
+                break
+    
+        except Exception as exc:
+            last_error = exc
+    else:
+        raise ValueError(f"Could not parse CSV: {last_error}")
 
     if df.empty:
         raise ValueError("The uploaded CSV is empty.")
