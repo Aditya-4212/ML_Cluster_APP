@@ -755,7 +755,7 @@ def step_cluster() -> None:
 
     mode_tab, auto_tab = st.tabs(["🎓 Manual Mode", "⚡ AutoML Mode"])
 
-    # ── Manual ──
+    # ── Manual Mode ──
     with mode_tab:
         section("Choose Your Algorithm")
         algo = st.selectbox("Algorithm", list(ALGO_INFO.keys()))
@@ -790,311 +790,60 @@ def step_cluster() -> None:
 
         section("Hyperparameters")
         params = _algo_params_ui(algo)
+
         scaler_c = st.selectbox(
-            "Scaler",
-            ["StandardScaler", "MinMaxScaler", "RobustScaler"],
-            key="c_scaler",
+            "Scaler", ["StandardScaler", "MinMaxScaler", "RobustScaler"], key="c_scaler"
         )
-
         reduction_c = st.selectbox(
-            "Visualisation",
-            ["PCA", "t-SNE"],
-            key="c_red",
+            "Visualisation", ["PCA", "t-SNE"], key="c_red"
         )
-
         st.session_state["reduction"] = reduction_c
 
         if st.button("▶ Train Model", type="primary", key="train_manual"):
             _train_model(df, algo, params, scaler_c)
 
-        # Show Results button after successful training
+        # Results navigation after training
         if st.session_state.get("clustering_done", False):
             st.success("✅ Model trained successfully!")
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                if st.button("View Results →", type="primary", key="goto_results_manual"):
+                    st.session_state.step = 5
+                    st.rerun()
+            with col2:
+                if st.button("← Back to Features", key="manual_back_to_features"):
+                    st.session_state.step = 3
+                    st.rerun()
 
-            if st.button("View Results →", type="primary", key="goto_results_1"):
-                st.session_state.step = 5
-                st.rerun()
-
-    # ── AutoML ──
+    # ── AutoML Mode ──
     with auto_tab:
         section("AutoML — Automated Model Selection")
         explain(
             "⚡ What does AutoML do?",
             "AutoML tries <strong>dozens of algorithm and hyperparameter combinations</strong> "
             "automatically and selects the configuration that achieves the best Silhouette Score. "
-            "It tests KMeans with different K values, Agglomerative with different linkage methods, "
-            "DBSCAN with different epsilon values, and Birch with different thresholds. "
             "This is the best starting point when you're not sure which algorithm suits your data.",
             kind="learn",
         )
 
-        scaler_a    = st.selectbox("Scaler", ["StandardScaler", "MinMaxScaler", "RobustScaler"], key="a_scaler")
+        scaler_a = st.selectbox("Scaler", ["StandardScaler", "MinMaxScaler", "RobustScaler"], key="a_scaler")
         reduction_a = st.selectbox("Visualisation", ["PCA", "t-SNE"], key="a_red")
-        n_km        = st.slider("KMeans: max K to try", 2, 12, 8)
+        n_km = st.slider("KMeans: max K to try", 2, 12, 8)
 
         if st.button("⚡ Run AutoML", type="primary", key="run_automl"):
             _run_automl(df, scaler_a, reduction_a, n_km)
 
-        nav_buttons(
-            back_step=3,
-            back_label="Features",
-            proceed_step=5,   # 🔥 IMPORTANT
-            proceed_label="View Results →",
-            proceed_key="cluster_nav"
-        )
-
-
-def _algo_params_ui(algo: str) -> dict:
-    params: dict = {}
-    if algo == "KMeans":
-        c1, c2, c3 = st.columns(3)
-        params["n_clusters"] = c1.slider("Clusters (k)", 2, 15, 3)
-        params["init"]       = c2.selectbox("Init", ["k-means++", "random"])
-        params["max_iter"]   = c3.slider("Max iterations", 100, 1000, 300, step=50)
-        explain("🔧 KMeans Parameters",
-                "<strong>k</strong>: the number of clusters you expect. Use the Elbow and Silhouette "
-                "charts in Step 6 Results to tune this. "
-                "<strong>k-means++</strong>: a smarter initialisation method that spreads starting "
-                "centres apart — almost always better than random. "
-                "<strong>max_iter</strong>: how many reassignment cycles the algorithm runs. "
-                "300 is almost always sufficient.", kind="learn")
-    elif algo == "DBSCAN":
-        c1, c2 = st.columns(2)
-        params["eps"]         = c1.slider("ε (epsilon)", 0.05, 3.0, 0.5, step=0.05)
-        params["min_samples"] = c2.slider("Min Samples", 2, 30, 5)
-        explain("🔧 DBSCAN Parameters",
-                "<strong>ε (epsilon)</strong>: the maximum distance between two points for them to "
-                "be considered neighbours. Too small = everything becomes noise. Too large = clusters merge. "
-                "A good starting point: look at the k-distance graph (sort each point's distance to "
-                "its 5th nearest neighbour; the 'knee' is a good ε). "
-                "<strong>min_samples</strong>: how many neighbours a point needs to be a 'core point'. "
-                "Rule of thumb: set to 2 × number of features.", kind="learn")
-    elif algo == "Agglomerative":
-        c1, c2 = st.columns(2)
-        params["n_clusters"] = c1.slider("Clusters", 2, 15, 3)
-        params["linkage"]    = c2.selectbox("Linkage", ["ward", "complete", "average", "single"])
-        explain("🔧 Agglomerative Parameters",
-                "<strong>ward</strong>: merges clusters that minimise the increase in total within-cluster "
-                "variance. Usually the best choice. "
-                "<strong>complete</strong>: merges clusters based on their maximum pairwise distance — "
-                "tends to produce compact, similarly-sized clusters. "
-                "<strong>average</strong>: uses the mean of all pairwise distances. "
-                "<strong>single</strong>: uses the minimum distance — can create long chain-like clusters.", kind="learn")
-    elif algo == "Spectral":
-        c1, c2 = st.columns(2)
-        params["n_clusters"] = c1.slider("Clusters", 2, 10, 3)
-        params["affinity"]   = c2.selectbox("Affinity", ["rbf", "nearest_neighbors"])
-        explain("🔧 Spectral Parameters",
-                "<strong>rbf</strong> (Radial Basis Function): uses a Gaussian kernel to measure "
-                "similarity between points — good for smooth, non-linear boundaries. "
-                "<strong>nearest_neighbors</strong>: connects each point to its K nearest neighbours "
-                "and clusters based on the graph structure. Better for disconnected clusters.", kind="learn")
-    elif algo == "Birch":
-        c1, c2, c3 = st.columns(3)
-        params["n_clusters"]       = c1.slider("Clusters", 2, 15, 3)
-        params["threshold"]        = c2.slider("Threshold", 0.1, 1.0, 0.5, step=0.05)
-        params["branching_factor"] = c3.slider("Branch Factor", 10, 100, 50, step=10)
-        explain("🔧 Birch Parameters",
-                "<strong>threshold</strong>: the maximum radius of a subcluster stored in the BIRCH tree. "
-                "Smaller = finer granularity but more memory. "
-                "<strong>branching_factor</strong>: max number of subclusters per tree node. "
-                "Larger = faster but coarser. Birch is most useful for very large datasets "
-                "(100k+ rows) where KMeans becomes slow.", kind="learn")
-    elif algo == "MeanShift":
-        bw = st.slider("Bandwidth (0 = auto)", 0.0, 5.0, 0.0, step=0.1)
-        params["bandwidth"] = bw if bw > 0 else None
-        explain("🔧 MeanShift Parameters",
-                "<strong>Bandwidth</strong>: controls the size of the region each data point 'looks at' "
-                "when shifting towards dense areas. Setting it to 0 lets the algorithm estimate it "
-                "automatically using a ball-tree search — recommended unless you have a specific reason "
-                "to override it. Note: MeanShift is slow on large datasets (>5,000 rows).", kind="learn")
-    return params
-
-
-def _build_model(algo: str, params: dict):
-    """Instantiate sklearn model from algo name + params dict (no eval() used)."""
-    if algo == "KMeans":
-        return KMeans(
-            n_clusters=params.get("n_clusters", 3),
-            init=params.get("init", "k-means++"),
-            max_iter=params.get("max_iter", 300),
-            random_state=42, n_init="auto",
-        )
-    elif algo == "DBSCAN":
-        return DBSCAN(
-            eps=params.get("eps", 0.5),
-            min_samples=params.get("min_samples", 5),
-        )
-    elif algo == "Agglomerative":
-        return AgglomerativeClustering(
-            n_clusters=params.get("n_clusters", 3),
-            linkage=params.get("linkage", "ward"),
-        )
-    elif algo == "Spectral":
-        return SpectralClustering(
-            n_clusters=params.get("n_clusters", 3),
-            affinity=params.get("affinity", "rbf"),
-            random_state=42,
-        )
-    elif algo == "Birch":
-        return Birch(
-            n_clusters=params.get("n_clusters", 3),
-            threshold=params.get("threshold", 0.5),
-            branching_factor=params.get("branching_factor", 50),
-        )
-    elif algo == "MeanShift":
-        return MeanShift(bandwidth=params.get("bandwidth"))
-    else:
-        raise ValueError(f"Unknown algorithm: {algo}")
-
-
-def _train_model(df: pd.DataFrame, algo: str, params: dict, scaler: str) -> None:
-    try:
-        with st.spinner(f"Training {algo}… this may take a moment for large datasets."):
-            X = preprocess_X(df, scaler, st.session_state.get("imputer", "Mean"))
-            model  = _build_model(algo, params)
-            labels = model.fit_predict(X)
-            st.session_state.X_processed    = X
-            st.session_state.model          = model
-            st.session_state.model_name     = algo
-            st.session_state.labels         = labels
-            st.session_state.metrics        = compute_all_metrics(X, labels)
-            st.session_state.clustering_done = True
-
-        metrics = st.session_state.metrics
-        n = metrics.get("Clusters", "?")
-        sil = metrics.get("Silhouette ↑", "—")
-
-        st.markdown(
-            f'<div class="success-box"><strong>✓ Training complete!</strong> '
-            f'Found <strong>{n} clusters</strong>. '
-            f'Silhouette Score: <strong>{sil}</strong> '
-            f'{"(good — >0.5 is strong)" if isinstance(sil, float) and sil > 0.5 else ""}'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-       # if st.button("View Results →", type="primary", key="goto_results_2"):
-           # st.session_state.step = 5
-           # st.rerun()
-
-    except Exception as e:
-        st.error(f"Training failed: {_safe_html(e)}")
-        st.caption("Tip: try a different algorithm, fewer clusters, or go back to adjust your features.")
-
-
-def _run_automl(df: pd.DataFrame, scaler: str, reduction: str, n_km: int) -> None:
-    X = preprocess_X(df, scaler, st.session_state.get("imputer", "Mean"))
-    st.session_state.X_processed  = X
-    st.session_state["reduction"] = reduction
-
-    _MAX_AUTOML_ROWS = 5000
-    X_search = X
-    if len(X) > _MAX_AUTOML_ROWS:
-        rng = np.random.default_rng(42)
-        idx = rng.choice(len(X), _MAX_AUTOML_ROWS, replace=False)
-        X_search = X[idx]
-
-    # Build configs — all stored as proper dicts (no eval() needed)
-    configs: list[tuple] = []
-    for k in range(2, n_km + 1):
-        configs.append(("KMeans", {"n_clusters": k, "init": "k-means++", "max_iter": 300}))
-    for k in range(2, 6):
-        for link in ["ward", "complete", "average"]:
-            configs.append(("Agglomerative", {"n_clusters": k, "linkage": link}))
-    for eps in [0.2, 0.4, 0.6, 0.8, 1.0]:
-        configs.append(("DBSCAN", {"eps": eps, "min_samples": 5}))
-    for k in range(2, 5):
-        configs.append(("Birch", {"n_clusters": k, "threshold": 0.5, "branching_factor": 50}))
-
-    total    = len(configs)
-    prog     = st.progress(0)
-    status   = st.empty()
-    results: list[dict] = []
-    t_start  = time.time()
-
-    for i, (name, cfg) in enumerate(configs):
-        prog.progress((i + 1) / total)
-
-        # Estimate time remaining
-        elapsed = time.time() - t_start
-        if i > 0:
-            eta = int((elapsed / i) * (total - i))
-            eta_str = f" — ~{eta}s remaining" if eta > 1 else " — almost done"
-        else:
-            eta_str = ""
-
-        status.markdown(
-            f'<div style="font-family:IBM Plex Mono;font-size:0.75rem;color:#8b90b0;">'
-            f'▸ Testing {_safe_html(name)} {_safe_html(str(cfg))} '
-            f'({i+1}/{total}){_safe_html(eta_str)}</div>',
-            unsafe_allow_html=True,
-        )
-        try:
-            model  = _build_model(name, cfg)
-            labels = model.fit_predict(X_search)
-            arr    = np.array(labels)
-            valid  = arr != -1
-            n_c    = len(set(arr[valid]))
-            if n_c < 2:
-                continue
-            sil = safe_silhouette(X_search, labels) or -1
-            db  = safe_davies_bouldin(X_search, labels) or 999
-            results.append({
-                "Algorithm":        name,
-                "Config":           str(cfg),
-                "Silhouette ↑":     sil,
-                "Davies-Bouldin ↓": db,
-                "Clusters":         n_c,
-                # Store raw dict (not string) for safe reconstruction
-                "_params":          cfg,
-                "_algo":            name,
-            })
-        except Exception:
-            continue
-
-    prog.empty()
-    status.empty()
-
-    if not results:
-        st.error("No valid configurations found. Try different cleaning settings or a smaller dataset.")
-        return
-
-    results.sort(key=lambda x: x["Silhouette ↑"], reverse=True)
-    best = results[0]
-
-    # Reconstruct best model using stored dict — NO eval() needed
-    best_model = _build_model(best["_algo"], best["_params"])
-    best_labels = best_model.fit_predict(X)
-
-    st.session_state.automl_results  = results
-    st.session_state.model           = best_model
-    st.session_state.model_name      = f"AutoML · {best['Algorithm']}"
-    st.session_state.labels          = best_labels
-    st.session_state.metrics         = compute_all_metrics(X, best_labels)
-    st.session_state.clustering_done = True
-
-    sil_val = best["Silhouette ↑"]
-    st.markdown(
-        f'<div class="success-box"><strong>✓ AutoML Complete!</strong> Best: '
-        f'<strong>{_safe_html(best["Algorithm"])}</strong> '
-        f'with config <code>{_safe_html(str(best["_params"]))}</code> — '
-        f'Silhouette = <strong>{sil_val:.4f}</strong> '
-        f'({best["Clusters"]} clusters)</div>',
-        unsafe_allow_html=True,
-    )
-
-    # Show top 15 results (hide internal keys)
-    display = [{k: v for k, v in r.items() if not k.startswith("_")} for r in results[:15]]
-    st.dataframe(pd.DataFrame(display), use_container_width=True, hide_index=True)
-
-    if len(results) >= 3:
-        st.plotly_chart(automl_comparison_chart(results), use_container_width=True)
-
-  #  if st.button("View Results →", type="primary", key="automl_goto_results"):
-      #  st.session_state.step = 5
-      #  st.rerun()
-
+        # Navigation
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            if st.button("← Features", key="automl_back"):
+                st.session_state.step = 3
+                st.rerun()
+        with col2:
+            if st.session_state.get("clustering_done", False):
+                if st.button("View Results →", type="primary", key="automl_to_results"):
+                    st.session_state.step = 5
+                    st.rerun()
 
 # ============================================================
 # STEP 5 — RESULTS
@@ -1103,57 +852,56 @@ def _run_automl(df: pd.DataFrame, scaler: str, reduction: str, n_km: int) -> Non
 def step_results() -> None:
     section("Step 6 · Results & Visualisation")
 
-    df_src = st.session_state.get("df_engineered")
-    if df_src is None:
-        df_src = st.session_state.get("df_clean")
-    if df_src is None:
-        df_src = st.session_state.get("df_raw")
+    # Prioritize data sources
+    df_src = None
+    for key in ["df_engineered", "df_clean", "df_raw"]:
+        if st.session_state.get(key) is not None:
+            df_src = st.session_state.get(key)
+            break
 
     if df_src is None:
         st.warning("Run clustering first.")
         st.stop()
 
-    X      = st.session_state.X_processed
-    labels = st.session_state.labels
-    metrics = st.session_state.metrics
+    X = st.session_state.get("X_processed")
+    labels = st.session_state.get("labels")
+    metrics = st.session_state.get("metrics")
+    model_name = st.session_state.get("model_name", "Unknown")
 
-    if labels is None or X is None:
+    if X is None or labels is None or metrics is None:
         st.warning("Run clustering first.")
         st.stop()
 
     df_r = df_src.reset_index(drop=True).copy()
 
+    # Align rows with labels
     if len(df_r) != len(labels):
-        df_fallback = st.session_state.get("df_clean") or st.session_state.get("df_raw")
-        if df_fallback is not None and len(df_fallback) == len(labels):
-            df_r = df_fallback.reset_index(drop=True).copy()
+        st.warning("Row count mismatch. Trying fallback...")
+        fallback = st.session_state.get("df_clean") or st.session_state.get("df_raw")
+        if fallback is not None and len(fallback) == len(labels):
+            df_r = fallback.reset_index(drop=True).copy()
         else:
-            st.error("Row count mismatch between data and cluster labels. Please re-run clustering.")
+            st.error("Cannot align data with cluster labels. Please re-run clustering.")
             st.stop()
 
     df_r["Cluster"] = labels
-    model_name = st.session_state.model_name
 
-    # ── Score strip ──
+    # ── Metrics strip ──
     metric_strip(metrics, model_name)
 
     if metrics.get("Noise pts", 0) > 0:
         st.markdown(
             f'<div class="warn-box"><strong>⚠ {metrics["Noise pts"]} noise points</strong> '
-            f'(DBSCAN label -1) — these are outliers not assigned to any cluster. '
-            f'They are excluded from metric calculations.</div>',
+            f'(DBSCAN label -1) — these are outliers not assigned to any cluster.</div>',
             unsafe_allow_html=True,
         )
 
     explain(
         "📊 How to read the scores?",
         "<strong>Silhouette Score</strong> (−1 to +1): measures how well each point fits its cluster "
-        "vs neighbouring clusters. Above 0.5 indicates strong, well-separated clusters. "
-        "Above 0.7 is excellent. Negative values suggest points may be mis-assigned. "
-        "<strong>Davies-Bouldin</strong>: lower is better. It measures the average ratio of "
-        "within-cluster scatter to between-cluster distance. "
-        "<strong>Calinski-Harabasz</strong>: higher is better. Measures how dense and well-separated "
-        "clusters are relative to each other. Use all three together — no single metric tells the full story.",
+        "vs neighbouring clusters. >0.5 = strong clusters. "
+        "<strong>Davies-Bouldin</strong>: lower is better. "
+        "<strong>Calinski-Harabasz</strong>: higher is better.",
         kind="learn",
     )
 
@@ -1168,12 +916,9 @@ def step_results() -> None:
         with st.spinner(f"Computing {reduction} projection…"):
             X2d = reduce_2d(X, reduction)
         num_cols = [c for c in df_r.select_dtypes(include=np.number).columns if c != "Cluster"]
-        hover_col = st.selectbox("Hover column", ["None"] + num_cols, key="hover")
-        hover_s = (
-            df_r[hover_col].reset_index(drop=True)
-            if hover_col != "None" and len(df_r) == len(X2d)
-            else None
-        )
+        hover_col = st.selectbox("Hover column", ["None"] + num_cols, key="hover_col")
+        hover_s = df_r[hover_col].reset_index(drop=True) if hover_col != "None" else None
+
         st.plotly_chart(
             scatter_clusters(X2d, labels, f"Cluster Map · {reduction}", hover_s),
             use_container_width=True,
@@ -1187,11 +932,9 @@ def step_results() -> None:
             st.plotly_chart(cluster_pie(labels), use_container_width=True)
 
     with tab_prof:
-        fig_radar = radar_profile(df_r)
-        if fig_radar:
+        if fig_radar := radar_profile(df_r):
             st.plotly_chart(fig_radar, use_container_width=True)
-        fig_imp = feature_importance_chart(df_r)
-        if fig_imp:
+        if fig_imp := feature_importance_chart(df_r):
             st.plotly_chart(fig_imp, use_container_width=True)
         num_cols = [c for c in df_r.select_dtypes(include=np.number).columns if c != "Cluster"]
         if num_cols:
@@ -1199,116 +942,55 @@ def step_results() -> None:
             st.dataframe(df_r.groupby("Cluster")[num_cols].mean().round(3), use_container_width=True)
 
     with tab_heat:
-        fig_heat = cluster_heatmap(df_r)
-        if fig_heat:
+        if fig_heat := cluster_heatmap(df_r):
             st.plotly_chart(fig_heat, use_container_width=True)
-        fig_pair = scatter_matrix(df_r)
-        if fig_pair:
+        if fig_pair := scatter_matrix(df_r):
             st.plotly_chart(fig_pair, use_container_width=True)
 
     with tab_elbow:
-        max_k = st.slider("Max K", 3, 15, 10)
+        max_k = st.slider("Max K for sweep", 3, 15, 10)
         c1, c2 = st.columns(2)
         with c1:
             st.plotly_chart(elbow_chart(X, max_k), use_container_width=True)
         with c2:
             st.plotly_chart(silhouette_sweep(X, max_k), use_container_width=True)
-        explain(
-            "📐 How to use these charts?",
-            "<strong>Elbow chart</strong>: plots inertia (within-cluster sum of squares) vs K. "
-            "The 'elbow' — the point where the curve bends and improvement slows — is a good K. "
-            "If no clear elbow exists, the data may not have strong natural clusters. "
-            "<strong>Silhouette sweep</strong>: plots the Silhouette Score for each K. "
-            "Pick the K with the highest peak. Always use both charts together for a more reliable decision.",
-            kind="learn",
-        )
 
     with tab_dend:
-        fig_d = dendrogram_chart(df_r)
-        if fig_d:
+        if fig_d := dendrogram_chart(df_r):
             try:
                 import matplotlib.pyplot as plt
                 st.pyplot(fig_d)
-                explain(
-                    "🌳 Reading the Dendrogram",
-                    "A dendrogram is a tree diagram showing how agglomerative clustering merges data points. "
-                    "The <strong>height</strong> of each horizontal line represents how different the two "
-                    "groups being merged are — taller merges = more dissimilar groups. "
-                    "To choose K: draw an imaginary horizontal line across the diagram. "
-                    "The number of vertical lines it crosses equals the number of clusters at that cut height.",
-                    kind="learn",
-                )
             finally:
                 plt.close(fig_d)
 
     with tab_exp:
         section("Export Your Results")
-
-        # ── Report preview + download ──
         report_md = generate_report(df_r, metrics, model_name)
 
         c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
-            st.download_button(
-                "⬇ Clustered CSV",
-                df_r.to_csv(index=False).encode(),
-                "clustered_data.csv", "text/csv",
-                use_container_width=True,
-            )
+            st.download_button("⬇ Clustered CSV", df_r.to_csv(index=False).encode(),
+                             "clustered_data.csv", "text/csv", use_container_width=True)
         with c2:
-            if st.session_state.model:
+            if st.session_state.get("model"):
                 buf = io.BytesIO()
                 joblib.dump(st.session_state.model, buf)
-                st.download_button(
-                    "💾 Model (.joblib)",
-                    buf.getvalue(),
-                    "model.joblib",
-                    use_container_width=True,
-                )
+                st.download_button("💾 Model (.joblib)", buf.getvalue(),
+                                 "model.joblib", use_container_width=True)
         with c3:
-            num_cols2 = [c for c in df_r.select_dtypes(include=np.number).columns if c != "Cluster"]
-            if num_cols2:
-                st.download_button(
-                    "📄 Stats Summary",
-                    df_r.groupby("Cluster")[num_cols2].describe().to_csv().encode(),
-                    "cluster_summary.csv", "text/csv",
-                    use_container_width=True,
-                )
-        with c4:
-            st.download_button(
-                "📊 Metrics CSV",
-                pd.DataFrame([metrics]).to_csv(index=False).encode(),
-                "metrics.csv", "text/csv",
-                use_container_width=True,
-            )
-        with c5:
-            st.download_button(
-                "📋 Full Report (.md)",
-                report_md.encode(),
-                "analysis_report.md",
-                "text/markdown",
-                use_container_width=True,
-                help="Download a structured Markdown report of your entire analysis. Open in any text editor or convert to PDF via browser Print.",
-            )
+            st.download_button("📋 Full Report (.md)", report_md.encode(),
+                             "analysis_report.md", "text/markdown", use_container_width=True)
 
-        # ── Report preview ──
         with st.expander("👁 Preview Full Report"):
             st.markdown(report_md)
 
-   # nav_buttons("📈 View Learning Module →", proceed_step=6, back_step=4,
-      #          back_label="Clustering", proceed_key="results_proceed")
-   # nav_buttons(back_step=4,
-            #    back_label="Clustering",)
+    # Navigation
     col1, col2 = st.columns([1, 5])
-
     with col1:
-        if st.button("← Clustering", key="results_back"):
+        if st.button("← Back to Clustering", key="results_back_to_cluster"):
             st.session_state.step = 4
             st.rerun()
-            
     recovery_panel(5)
-
-
 # ============================================================
 # STEP 6 — LEARN
 # ============================================================
