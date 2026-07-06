@@ -228,7 +228,6 @@ def step_load(uploaded) -> None:
 
         section("Or load a sample dataset")
         samples = {
-            "🛒 Mall Customers": "https://raw.githubusercontent.com/YBI-Foundation/Dataset/main/Mall%20Customers.csv",
             "🌸 Iris Flowers":   "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv",
         }
         c1, c2 = st.columns(2)
