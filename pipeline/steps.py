@@ -811,9 +811,9 @@ def step_cluster() -> None:
         if st.session_state.get("clustering_done", False):
             st.success("✅ Model trained successfully!")
 
-            if st.button("View Results →", type="primary", key="goto_results_1"):
-                st.session_state.step = 5
-                st.rerun()
+           # if st.button("View Results →", type="primary", key="goto_results_1"):
+              #  st.session_state.step = 5
+              #  st.rerun()
 
     # ── AutoML ──
     with auto_tab:
