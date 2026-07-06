@@ -835,8 +835,13 @@ def step_cluster() -> None:
         if st.button("⚡ Run AutoML", type="primary", key="run_automl"):
             _run_automl(df, scaler_a, reduction_a, n_km)
 
-    nav_buttons(back_step=3, back_label="Features", proceed_key="cluster_nav")
-    recovery_panel(4)
+        nav_buttons(
+            back_step=3,
+            back_label="Features",
+            proceed_step=5,   # 🔥 IMPORTANT
+            proceed_label="View Results →",
+            proceed_key="cluster_nav"
+        )
 
 
 def _algo_params_ui(algo: str) -> dict:
