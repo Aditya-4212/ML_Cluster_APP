@@ -811,7 +811,7 @@ def step_cluster() -> None:
         if st.session_state.get("clustering_done", False):
             st.success("✅ Model trained successfully!")
 
-            if st.button("View Results →", type="primary", key="goto_results"):
+            if st.button("View Results →", type="primary", key="goto_results_1"):
                 st.session_state.step = 5
                 st.rerun()
 
@@ -969,7 +969,7 @@ def _train_model(df: pd.DataFrame, algo: str, params: dict, scaler: str) -> None
             unsafe_allow_html=True,
         )
 
-        if st.button("View Results →", type="primary", key="goto_results"):
+        if st.button("View Results →", type="primary", key="goto_results_2"):
             st.session_state.step = 5
             st.rerun()
 
