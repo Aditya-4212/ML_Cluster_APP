@@ -153,7 +153,7 @@ def pipeline_stepper():
 
 # ── Hero header ───────────────────────────────────────────────
 
-def hero(title: str = "ML Clustering Studio", subtitle: str = "End-to-End Production Pipeline") -> None:
+def hero(title: str = "ML Clusters", subtitle: str = "End-to-End Production Pipeline") -> None:
     st.markdown(
         f'<div class="hero">'
         f'<div class="hero-title">{_html.escape(title)}</div>'
