@@ -1292,8 +1292,8 @@ def step_results() -> None:
 
    # nav_buttons("📈 View Learning Module →", proceed_step=6, back_step=4,
       #          back_label="Clustering", proceed_key="results_proceed")
-    nav_buttons(back_step=4,
-                back_label="Clustering",)
+   # nav_buttons(back_step=4,
+            #    back_label="Clustering",)
     recovery_panel(5)
 
 
