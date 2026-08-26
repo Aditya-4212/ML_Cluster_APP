@@ -16,7 +16,6 @@ import streamlit as st
 from scipy.stats import zscore
 from sklearn.cluster import (
     KMeans, DBSCAN, AgglomerativeClustering,
-    SpectralClustering, Birch, MeanShift,
 )
 
 from config.settings import ALGO_INFO, COLORS
@@ -34,7 +33,7 @@ from utils.charts import (
     correlation_heatmap, outlier_scatter, cat_bar,
     pca_variance_chart, elbow_chart, silhouette_sweep,
     feature_importance_chart, radar_profile,
-    cluster_heatmap, scatter_matrix, dendrogram_chart,
+    cluster_heatmap, scatter_matrix,
     automl_comparison_chart,
 )
 from components.ui import section, explain, metric_strip, progress_tracker, recovery_panel, nav_buttons
@@ -195,34 +194,12 @@ def step_load(uploaded) -> None:
 
     # ── No file uploaded ──
     if not uploaded and st.session_state.df_raw is None:
-        # ── Inline upload (main area) ──
-        section("Upload Your Dataset")
-        inline_upload = st.file_uploader(
-            "Drop a CSV file here",
-            type=["csv"],
-            key="inline_uploader",
-            help="Max 50 MB · Supports numeric and categorical columns · Auto-detects types",
-        )
-        if inline_upload:
-            try:
-                with st.spinner("Loading and detecting column types…"):
-                    df = load_csv(inline_upload)
-                st.session_state.df_raw = df
-                st.rerun()
-            except ValueError as e:
-                st.error(str(e))
-                st.stop()
-
         st.markdown(
-            """
-            <div style="text-align:center;padding:1.5rem 2rem;background:#111225;
-            border:2px dashed #1e2035;border-radius:14px;margin:1rem 0;">
-              <div style="font-size:2.5rem;margin-bottom:0.8rem">🧬</div>
-              <div style="font-family:IBM Plex Mono;font-size:0.85rem;color:#8b90b0;margin-bottom:0.3rem;">
-              Or load a sample dataset below
-              </div>
-            </div>
-            """,
+            '<div class="card" style="text-align:center;padding:3rem 2rem;">'
+            '<div style="font-size:3rem;margin-bottom:1rem;">📤</div>'
+            '<div style="font-size:1rem;color:#8b90b0;">Upload a CSV file using the sidebar to get started, '
+            'or try a sample dataset below.</div>'
+            '</div>',
             unsafe_allow_html=True,
         )
 
@@ -822,7 +799,7 @@ def step_cluster() -> None:
             "AutoML tries <strong>dozens of algorithm and hyperparameter combinations</strong> "
             "automatically and selects the configuration that achieves the best Silhouette Score. "
             "It tests KMeans with different K values, Agglomerative with different linkage methods, "
-            "DBSCAN with different epsilon values, and Birch with different thresholds. "
+            "and DBSCAN with different epsilon values. "
             "This is the best starting point when you're not sure which algorithm suits your data.",
             kind="learn",
         )
@@ -879,34 +856,6 @@ def _algo_params_ui(algo: str) -> dict:
                 "tends to produce compact, similarly-sized clusters. "
                 "<strong>average</strong>: uses the mean of all pairwise distances. "
                 "<strong>single</strong>: uses the minimum distance — can create long chain-like clusters.", kind="learn")
-    elif algo == "Spectral":
-        c1, c2 = st.columns(2)
-        params["n_clusters"] = c1.slider("Clusters", 2, 10, 3)
-        params["affinity"]   = c2.selectbox("Affinity", ["rbf", "nearest_neighbors"])
-        explain("🔧 Spectral Parameters",
-                "<strong>rbf</strong> (Radial Basis Function): uses a Gaussian kernel to measure "
-                "similarity between points — good for smooth, non-linear boundaries. "
-                "<strong>nearest_neighbors</strong>: connects each point to its K nearest neighbours "
-                "and clusters based on the graph structure. Better for disconnected clusters.", kind="learn")
-    elif algo == "Birch":
-        c1, c2, c3 = st.columns(3)
-        params["n_clusters"]       = c1.slider("Clusters", 2, 15, 3)
-        params["threshold"]        = c2.slider("Threshold", 0.1, 1.0, 0.5, step=0.05)
-        params["branching_factor"] = c3.slider("Branch Factor", 10, 100, 50, step=10)
-        explain("🔧 Birch Parameters",
-                "<strong>threshold</strong>: the maximum radius of a subcluster stored in the BIRCH tree. "
-                "Smaller = finer granularity but more memory. "
-                "<strong>branching_factor</strong>: max number of subclusters per tree node. "
-                "Larger = faster but coarser. Birch is most useful for very large datasets "
-                "(100k+ rows) where KMeans becomes slow.", kind="learn")
-    elif algo == "MeanShift":
-        bw = st.slider("Bandwidth (0 = auto)", 0.0, 5.0, 0.0, step=0.1)
-        params["bandwidth"] = bw if bw > 0 else None
-        explain("🔧 MeanShift Parameters",
-                "<strong>Bandwidth</strong>: controls the size of the region each data point 'looks at' "
-                "when shifting towards dense areas. Setting it to 0 lets the algorithm estimate it "
-                "automatically using a ball-tree search — recommended unless you have a specific reason "
-                "to override it. Note: MeanShift is slow on large datasets (>5,000 rows).", kind="learn")
     return params
 
 
@@ -929,20 +878,6 @@ def _build_model(algo: str, params: dict):
             n_clusters=params.get("n_clusters", 3),
             linkage=params.get("linkage", "ward"),
         )
-    elif algo == "Spectral":
-        return SpectralClustering(
-            n_clusters=params.get("n_clusters", 3),
-            affinity=params.get("affinity", "rbf"),
-            random_state=42,
-        )
-    elif algo == "Birch":
-        return Birch(
-            n_clusters=params.get("n_clusters", 3),
-            threshold=params.get("threshold", 0.5),
-            branching_factor=params.get("branching_factor", 50),
-        )
-    elif algo == "MeanShift":
-        return MeanShift(bandwidth=params.get("bandwidth"))
     else:
         raise ValueError(f"Unknown algorithm: {algo}")
 
@@ -1003,8 +938,6 @@ def _run_automl(df: pd.DataFrame, scaler: str, reduction: str, n_km: int) -> Non
             configs.append(("Agglomerative", {"n_clusters": k, "linkage": link}))
     for eps in [0.2, 0.4, 0.6, 0.8, 1.0]:
         configs.append(("DBSCAN", {"eps": eps, "min_samples": 5}))
-    for k in range(2, 5):
-        configs.append(("Birch", {"n_clusters": k, "threshold": 0.5, "branching_factor": 50}))
 
     total    = len(configs)
     prog     = st.progress(0)
@@ -1133,6 +1066,12 @@ def step_results() -> None:
     df_r["Cluster"] = labels
     model_name = st.session_state.model_name
 
+    st.markdown(
+        f'<div class="success-box"><strong>✅ Algorithm Used: {_safe_html(model_name)}</strong> '
+        f'— clustering completed successfully.</div>',
+        unsafe_allow_html=True,
+    )
+
     # ── Score strip ──
     metric_strip(metrics, model_name)
 
@@ -1158,9 +1097,9 @@ def step_results() -> None:
 
     reduction = st.session_state.get("reduction", "PCA")
 
-    tab_sc, tab_dist, tab_prof, tab_heat, tab_elbow, tab_dend, tab_exp = st.tabs([
+    tab_sc, tab_dist, tab_prof, tab_heat, tab_elbow, tab_exp = st.tabs([
         "🗺️ Scatter", "📊 Distribution", "🧬 Profiles",
-        "🌡️ Heatmap", "📐 Elbow / Sweep", "🌳 Dendrogram", "💾 Export"
+        "🌡️ Heatmap", "📐 Elbow / Sweep", "💾 Export"
     ])
 
     with tab_sc:
@@ -1221,24 +1160,6 @@ def step_results() -> None:
             "Pick the K with the highest peak. Always use both charts together for a more reliable decision.",
             kind="learn",
         )
-
-    with tab_dend:
-        fig_d = dendrogram_chart(df_r)
-        if fig_d:
-            try:
-                import matplotlib.pyplot as plt
-                st.pyplot(fig_d)
-                explain(
-                    "🌳 Reading the Dendrogram",
-                    "A dendrogram is a tree diagram showing how agglomerative clustering merges data points. "
-                    "The <strong>height</strong> of each horizontal line represents how different the two "
-                    "groups being merged are — taller merges = more dissimilar groups. "
-                    "To choose K: draw an imaginary horizontal line across the diagram. "
-                    "The number of vertical lines it crosses equals the number of clusters at that cut height.",
-                    kind="learn",
-                )
-            finally:
-                plt.close(fig_d)
 
     with tab_exp:
         section("Export Your Results")
