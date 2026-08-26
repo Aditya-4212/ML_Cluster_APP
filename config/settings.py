@@ -58,27 +58,6 @@ ALGO_INFO = {
         "best":  "When you want a hierarchy/dendrogram, small-to-medium datasets.",
         "worst": "Large datasets (slow), need to specify K.",
     },
-    "Spectral": {
-        "icon":  "🌊",
-        "level": "Advanced",
-        "desc":  "Uses graph/eigenvalue decomposition to find clusters. Excellent for non-convex shapes.",
-        "best":  "Complex non-spherical clusters, image segmentation.",
-        "worst": "Very large datasets (memory intensive).",
-    },
-    "Birch": {
-        "icon":  "🌿",
-        "level": "Intermediate",
-        "desc":  "Builds a tree structure for fast incremental clustering. Memory efficient.",
-        "best":  "Very large datasets, streaming data.",
-        "worst": "Non-spherical clusters, outlier-heavy data.",
-    },
-    "MeanShift": {
-        "icon":  "🎱",
-        "level": "Intermediate",
-        "desc":  "Finds cluster centres by shifting towards high-density regions. Auto-finds K.",
-        "best":  "Unknown K, smooth density distributions.",
-        "worst": "Large datasets (slow), choosing bandwidth is tricky.",
-    },
 }
 
 # ── Session state defaults ──
