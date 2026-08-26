@@ -13,11 +13,6 @@ import plotly.graph_objects as go
 import streamlit as st
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-from sklearn.preprocessing import StandardScaler
-import scipy.cluster.hierarchy as sch
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 from config.settings import PLOTLY_THEME, COLORS
 
@@ -304,34 +299,6 @@ def scatter_matrix(df_clustered: pd.DataFrame, top_n: int = 4):
     fig.update_layout(**PLOTLY_THEME, height=520,
                       title=dict(font=dict(family="IBM Plex Mono", size=12)))
     return fig
-
-
-# ── Dendrogram (matplotlib) ─────────────────────────────────
-
-def dendrogram_chart(df: pd.DataFrame, max_rows: int = 500):
-    """
-    Returns a matplotlib Figure. Caller must call plt.close(fig) after st.pyplot(fig).
-    """
-    num_cols = [c for c in df.select_dtypes(include=np.number).columns
-                if c != "Cluster"]
-    if not num_cols:
-        return None
-    sample = df[num_cols].dropna().sample(min(max_rows, len(df)), random_state=42)
-    Z = sch.linkage(StandardScaler().fit_transform(sample), method="ward")
-    fig_d, ax = plt.subplots(figsize=(12, 4))
-    fig_d.patch.set_facecolor("#0d0e1a")
-    ax.set_facecolor("#0d0e1a")
-    sch.dendrogram(Z, ax=ax, leaf_rotation=90,
-                   color_threshold=0.7 * max(Z[:, 2]),
-                   above_threshold_color="#22d3ee",
-                   link_color_func=lambda k: "#a78bfa")
-    ax.tick_params(colors="#6b7090", labelsize=7)
-    for spine in ax.spines.values():
-        spine.set_color("#1e2035")
-    ax.set_title("Hierarchical Dendrogram (Ward Linkage)",
-                 color="#6b7090", fontsize=10, pad=8)
-    plt.tight_layout()
-    return fig_d
 
 
 # ── AutoML comparison bar ───────────────────────────────────
